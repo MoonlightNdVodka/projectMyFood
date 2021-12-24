@@ -1,4 +1,0 @@
-{
-"static": "./node_modules/json-server/public",
-"apiserver": "json-server -p 3001 -w tools/db.json -s ./node_modules/json-server/public"
-}
