@@ -217,22 +217,37 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	//Создаем константу, которая собирает ссылку, и в случае ошибки, выдает код ошибки и ссылку
 	const getResource = async (url) => {
-        let res = await fetch(url);
-    
+		let res = await fetch(url);
+
 		if (!res.ok) {
 			throw new Error(`Could not fetch ${url}, status ${res.status}`);
 		}
 
-        return await res.json();
-    };
-	
+		return await res.json();
+	};
+
 	//НИЖЕ создаем ссылку на запрос, по которому забираем из базы данных поля для конструктора меню
-	getResource('http://localhost:3000/menu')
-	.then(data => {
-		data.forEach(({img, altimg, title, descr, price}) => {
-			new FoodMenu(img, altimg, title, descr, price, '.menu .container').render();
+	// getResource('http://localhost:3000/menu')
+	// .then(data => {
+	// 	data.forEach(({img, altimg, title, descr, price}) => {
+	// 		new FoodMenu(img, altimg, title, descr, price, '.menu .container').render();
+	// 	});
+	// });
+
+	//ПОДКЛЮЧАЕМ внешнюю библиотеку axios
+	axios.get('http://localhost:3000/menu')
+		.then(dataRequest => {
+			dataRequest.data.forEach(({
+				img,
+				altimg,
+				title,
+				descr,
+				price
+			}) => {
+				new FoodMenu(img, altimg, title, descr, price, '.menu .container').render();
+			});
 		});
-	});
+
 
 	//FORMS
 	//получаем все формы которые есть на странице
@@ -244,51 +259,51 @@ window.addEventListener('DOMContentLoaded', () => {
 	};
 
 	forms.forEach(item => {
-        bindPostData(item);
-    });
-	
+		bindPostData(item);
+	});
+
 	//Создаем шаблон для запроса, что бы постить данные к нам в БД
-    const postData = async (url, data) => {
-        let res = await fetch(url, {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: data
-        });
-    
-        return await res.json();
-    };
+	const postData = async (url, data) => {
+		let res = await fetch(url, {
+			method: "POST",
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: data
+		});
 
-    function bindPostData(form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
+		return await res.json();
+	};
 
-            let statusMessage = document.createElement('img');
-            statusMessage.src = message.loading;
-            statusMessage.style.cssText = `
+	function bindPostData(form) {
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			let statusMessage = document.createElement('img');
+			statusMessage.src = message.loading;
+			statusMessage.style.cssText = `
                 display: block;
                 margin: 0 auto;
             `;
-            form.insertAdjacentElement('afterend', statusMessage);
-        
-            const formData = new FormData(form);
+			form.insertAdjacentElement('afterend', statusMessage);
 
-            const json = JSON.stringify(Object.fromEntries(formData.entries()));
-			
+			const formData = new FormData(form);
+
+			const json = JSON.stringify(Object.fromEntries(formData.entries()));
+
 			// создаем промис с ссылкой для ПОСТ запроса с сервера в нашу базу данных 
-            postData('http://localhost:3000/requests', json)
-            .then(data => {
-                console.log(data);
-                showThanksModal(message.success);
-                statusMessage.remove();
-            }).catch(() => {
-                showThanksModal(message.failure);
-            }).finally(() => {
-                form.reset();
-            });
-        });
-    } 
+			postData('http://localhost:3000/requests', json)
+				.then(data => {
+					console.log(data);
+					showThanksModal(message.success);
+					statusMessage.remove();
+				}).catch(() => {
+					showThanksModal(message.failure);
+				}).finally(() => {
+					form.reset();
+				});
+		});
+	}
 
 	function showThanksModal(message) {
 		const prevModalDialog = document.querySelector('.modal__dialog');
@@ -314,4 +329,51 @@ window.addEventListener('DOMContentLoaded', () => {
 	fetch('http://localhost:3000/menu')
 		.then(data => data.json())
 		.then(res => console.log(res));
+
+
+	//SLIDER
+
+	const sliderItem = document.querySelector('.offer__slider-counter'),
+		currentCounter = sliderItem.querySelector('#current'),
+		totalCount = sliderItem.querySelector('#total');
+	const prev = document.querySelector('.offer__slider-prev'),
+		next = document.querySelector('.offer__slider-next'),
+		slides = document.querySelectorAll('.offer__slide');
+	let slideIndex = 1;
+
+	prev.addEventListener('click', () => {
+		plusSlides(-1);
+	});
+	next.addEventListener('click', () => {
+		plusSlides(1);
+	});
+
+	showSlide(slideIndex);
+
+	function showSlide(num) {
+		if (num > slides.length){ slideIndex = 1; }
+		if (num < 1) { slideIndex = slides.length; }
+
+		slides.forEach(item => item.style.display = 'none');
+		slides[slideIndex - 1].style.display = 'block';
+	
+		if (slides.length < 10) {
+			currentCounter.textContent = `0${slideIndex}`;
+		} else {
+			totalCount.textContent = slideIndex;
+		}
+	}
+
+	function plusSlides(num) {
+		showSlide(slideIndex +=num);
+	}
+	
+// 1) Получить как элемент весь слайдер
+// 2)Установить позишон relative - точки всегда внизу относительно слайдера
+// 3) Создать обертку для точек
+// 4)Циклом или перебором создать кол-во точек == кол-ву слайдов
+// 5) Сделать класс активности, какая точка сейчас активна,
+// и что бы было понятно, какая точка к чему ведет 
+// 6) При клике на определенную точку - перемещаемся на  нужный слайдера
+
 });

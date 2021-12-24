@@ -18,5 +18,8 @@
   "homepage": "https://github.com/MoonlightNdVodka/projectMyFood#readme",
   "devDependencies": {
     "json-server": "^0.17.0"
+  },
+  "dependencies": {
+    "axios": "^0.24.0"
   }
 }
